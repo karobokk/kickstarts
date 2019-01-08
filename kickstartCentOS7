@@ -1,0 +1,112 @@
+#version=DEVEL
+# System authorization information
+auth --enableshadow --passalgo=sha512
+# Use NFS installation media
+url --url="ftp://192.168.142.100/pub/"
+# Use graphical install
+text
+# Install OS instead of upgrade
+install
+# Firewall configuration
+firewall --disabled
+# Run the Setup Agent on first boot
+firstboot --enable
+ignoredisk --only-use=sda,sdb
+# Keyboard layouts
+keyboard --vckeymap=us --xlayouts='us'
+# System language
+lang en_US.UTF-8
+# SELinux configuration
+selinux disabled
+
+# Installation logging level
+logging level=info
+
+# Network information
+network  --bootproto=dhcp --device=ens10 --onboot=off --ipv6=auto --no-activate
+network  --bootproto=dhcp --device=ens9 --onboot=off --ipv6=auto
+network  --hostname=localhost.localdomain
+
+# Root password
+rootpw --iscrypted $6$N.qCz8r99ql229Vm$dLbSdpFrArB40af2pC3i7COcI5XQ23KMs4SUUN9J63FFfZgAT.VZbF6UnCJYXTSk5uC.9MTLXfisIxeMAnQ.50
+# System services
+services --enabled="chronyd"
+# System timezone
+timezone America/New_York --isUtc
+# System bootloader configuration
+bootloader --append=" crashkernel=auto" --location=mbr --boot-drive=sdb
+# Partition clearing information
+clearpart --all --initlabel --drives=sda,sdb
+# Disk partitioning information
+part raid.954 --fstype="mdmember" --ondisk=sda --size=4606
+part raid.960 --fstype="mdmember" --ondisk=sdb --size=4606
+part raid.646 --fstype="mdmember" --ondisk=sda --size=513
+part raid.652 --fstype="mdmember" --ondisk=sdb --size=513
+raid /boot --device=boot00 --fstype="ext4" --level=RAID1 raid.646 raid.652
+raid pv.966 --device=pv00 --fstype="lvmpv" --level=RAID1 raid.954 raid.960
+volgroup centos --pesize=4096 pv.966
+logvol /  --fstype="ext4" --size=4600 --name=var --vgname=centos
+
+%packages
+@^minimal
+@core
+chrony
+kexec-tools
+
+%end
+
+%addon com_redhat_kdump --enable --reserve-mb='auto'
+
+%end
+
+%anaconda
+pwpolicy root --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+pwpolicy user --minlen=6 --minquality=1 --notstrict --nochanges --emptyok
+pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
+%end
+
+%post
+adduser i.lebedev
+mkdir -p /home/i.lebedev/.ssh
+echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzo3HYwbSCP+M+brHOXhQ5AXlbHPszFwQgk1emmZxh03sYRAWBqf5th7DxwetijpirAeeMvxfGZyB8wG3qMoxwSJQnHcOtheYvVsrUlaSE6zeB2GnSpRAUpRc2yYaYP2ovN+gqtJmTTmBJHdn+hlIWPYnMPXKXH39Xahjd3ekqtWcKNR+G3YPEtfX5TLPWB53iYXTXLJDXIgitztsEASSMGB/+qwfw+HrlsrEA6CoLz1BC1ko8JRmxORknZ9NzB2JUs8m4d2x7nezSkvNrHEyGKf71/bnKJf1td8YGZ+fT3VBfoyz0rn5tPtags+Fo2vTZetjoFvOSbbfCzQhPO1jV my.ssh.key' >> /home/i.lebedev/.ssh/authorized_keys
+
+echo "BONDING_OPTS=\"miimon=100 mode=active-backup\"
+TYPE=Bond
+BONDING_MASTER=yes
+PROXY_METHOD=none
+BROWSER_ONLY=no
+BOOTPROTO=none
+IPADDR=192.168.142.101
+DNS=192.168.142.1
+GATEWAY=192.168.142.1
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+NM_CONTROLLED=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=\"Bond connection 1\"
+DEVICE=nm-bond
+ONBOOT=yes
+" > /etc/sysconfig/network-scripts/ifcfg-Bond_connection_1
+
+echo "TYPE=Ethernet
+NAME=ens9
+DEVICE=ens9
+ONBOOT=yes
+MASTER=nm-bond
+NM_CONTROLLED=no
+SLAVE=yes" > /etc/sysconfig/network-scripts/ifcfg-ens9
+
+echo "TYPE=Ethernet
+NAME=ens10
+DEVICE=ens10
+ONBOOT=yes
+MASTER=nm-bond
+NM_CONTROLLED=no
+SLAVE=yes" > /etc/sysconfig/network-scripts/ifcfg-ens10
+
+
+%end
+

@@ -1,0 +1,84 @@
+
+#version=DEVEL
+install
+firewall --disabled
+url --url="ftp://192.168.142.100/centos6_i386"
+lang en_US.UTF-8
+keyboard us
+skipx
+text
+network --onboot no --device eth0 --bootproto dhcp --noipv6
+network --onboot no --device eth1 --bootproto dhcp --noipv6
+rootpw  --iscrypted $6$krjb1VWdNoO77oCo$LoaNIS/CfGqbnFBUIR0z6hXP.eZGbMPnmwHe78Rpecdoipb95ibO.PcMebKBZPwM8V/iBIRCDjlicVFzXHmjQ1
+authconfig --enableshadow --passalgo=sha512
+selinux --permissive
+timezone --utc America/New_York
+bootloader --location=mbr --driveorder=sda,sdb --append="nomodeset crashkernel=auto rhgb quiet"
+# The following is the partition information you requested
+# Note that any partitions you deleted are not expressed
+# here so unless you clear all partitions first, this is
+# not guaranteed to work
+clearpart --none
+
+zerombr
+clearpart --all --initlabel --drives=sda,sdb
+bootloader --location=mbr --driveorder=sda,sdb
+
+part raid.sda1 --asprimary --fstype="raid" --ondisk=sda --size=513
+part raid.sdb1 --asprimary --fstype="raid" --ondisk=sdb --size=513
+part raid.sda2 --asprimary --fstype="raid" --ondisk=sda --size=4606 --grow
+part raid.sdb2 --asprimary --fstype="raid" --ondisk=sdb --size=4606 --grow
+
+raid /boot --device=0 --fstype="ext4" --level=RAID1 raid.sda1 raid.sdb1
+raid pv.01 --device=1 --fstype="physical volume (LVM)" --level=RAID1 raid.sda2 raid.sdb2
+
+volgroup centos --pesize=4096 pv.01
+
+logvol /  --fstype="ext4" --size=4600 --name=root --vgname=centos
+
+%packages --nobase
+@core
+
+%post
+
+echo "alias bond0 bonding
+options bond0 mode=1 miimon=100" > /etc/modprobe.d/bonding.conf
+
+echo "DEVICE=bond0
+NAME=bond0
+TYPE=Bond
+BONDING_MASTER=yes
+IPADDR=192.168.142.102
+DNS1=192.168.142.1
+GATEWAY=192.168.142.1
+PREFIX=24
+ONBOOT=yes
+BOOTPROTO=static
+" > /etc/sysconfig/network-scripts/ifcfg-bond0
+
+echo "DEVICE=eth0
+TYPE=Ethernet
+ONBOOT=yes
+MASTER=bond0
+NM_CONTROLLED=no
+BOOTPROTO=none
+SLAVE=yes
+" > /etc/sysconfig/network-scripts/ifcfg-eth0
+
+echo "DEVICE=eth1
+TYPE=Ethernet
+ONBOOT=yes
+NM_CONTROLLED=no
+MASTER=bond0
+SLAVE=yes
+BOOTPROTO=none" > /etc/sysconfig/network-scripts/ifcfg-eth1
+
+
+adduser i.lebedev
+mkdir -p /home/i.lebedev/.ssh
+echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzo3HYwbSCP+M+brHOXhQ5AXlbHPszFwQgk1emmZxh03sYRAWBqf5th7DxwetijpirAeeMvxfGZyB8wG3qMoxwSJQnHcOtheYvVsrUlaSE6zeB2GnSpRAUpRc2yYaYP2ovN+gqtJmTTmBJHdn+hlIWPYnMPXKXH39Xahjd3ekqtWcKNR+G3YPEtfX5TLPWB53iYXTXLJDXIgitztsEASSMGB/+qwfw+HrlsrEA6CoLz1BC1ko8JRmxORknZ9NzB2JUs8m4d2x7nezSkvNrHEyGKf71/bnKJf1td8YGZ+fT3VBfoyz0rn5tPtags+Fo2vTZetjoFvOSbbfCzQhPO1jV  my.ssh.key' >> /home/i.lebedev/.ssh/authorized_keys
+
+
+%end
+
+
