@@ -1,4 +1,5 @@
 kickstarts:
+	
 	CentOS7:
 	
 		raid1
