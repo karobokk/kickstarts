@@ -1,9 +1,9 @@
-kickstarts
-	CentOS7
+kickstarts:
+	CentOS7:
 		raid1
 		LVM
 		users
-	CentOS6
+	CentOS6:
 		raid1
 		LVM
 		users
