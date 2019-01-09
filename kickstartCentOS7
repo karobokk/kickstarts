@@ -68,7 +68,7 @@ pwpolicy luks --minlen=6 --minquality=1 --notstrict --nochanges --notempty
 %post
 adduser i.lebedev
 mkdir -p /home/i.lebedev/.ssh
-echo 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCzo3HYwbSCP+M+brHOXhQ5AXlbHPszFwQgk1emmZxh03sYRAWBqf5th7DxwetijpirAeeMvxfGZyB8wG3qMoxwSJQnHcOtheYvVsrUlaSE6zeB2GnSpRAUpRc2yYaYP2ovN+gqtJmTTmBJHdn+hlIWPYnMPXKXH39Xahjd3ekqtWcKNR+G3YPEtfX5TLPWB53iYXTXLJDXIgitztsEASSMGB/+qwfw+HrlsrEA6CoLz1BC1ko8JRmxORknZ9NzB2JUs8m4d2x7nezSkvNrHEyGKf71/bnKJf1td8YGZ+fT3VBfoyz0rn5tPtags+Fo2vTZetjoFvOSbbfCzQhPO1jV my.ssh.key' >> /home/i.lebedev/.ssh/authorized_keys
+echo 'ssh-rsa XXXXXXX my.ssh.key' >> /home/i.lebedev/.ssh/authorized_keys
 
 echo "BONDING_OPTS=\"miimon=100 mode=active-backup\"
 TYPE=Bond
